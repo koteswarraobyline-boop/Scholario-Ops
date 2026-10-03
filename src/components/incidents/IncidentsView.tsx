@@ -8,6 +8,7 @@ import {
   Send, 
   ArrowRight
 } from 'lucide-react';
+import { IncidentFlowChart } from '../visuals/IncidentFlowChart';
 
 interface IncidentDetailModalProps {
   incident: Incident;
@@ -391,7 +392,8 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({ incide
 };
 
 export const IncidentsView: React.FC = () => {
-  const { incidents, selectedIncidentId, setSelectedIncidentId, applications } = useOps();
+  const { incidents, selectedIncidentId, setSelectedIncidentId, applications, theme } = useOps();
+  const isDark = theme === 'dark';
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CRITICAL' | 'RESOLVED'>('ALL');
 
   const selectedIncident = incidents.find(i => i.id === selectedIncidentId);
@@ -404,7 +406,7 @@ export const IncidentsView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {selectedIncident && (
         <IncidentDetailModal
           incident={selectedIncident}
@@ -413,24 +415,30 @@ export const IncidentsView: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1E293B]">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b ${
+        isDark ? 'border-[#1E293B]' : 'border-slate-200'
+      }`}>
         <div>
-          <h1 className="text-lg font-bold text-slate-100 font-mono tracking-tight">
+          <h1 className="text-lg font-bold font-mono tracking-tight">
             INCIDENT COMMAND WORKSPACE
           </h1>
-          <p className="text-xs text-slate-400 font-mono">
+          <p className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Consecutive failure-confirmed incidents, blast radius correlation &amp; mitigation timelines
           </p>
         </div>
 
         {/* Filter */}
-        <div className="flex items-center gap-1 p-0.5 bg-[#0B0F17] rounded border border-[#1E293B] text-xs font-mono">
+        <div className={`flex items-center gap-1 p-0.5 rounded border text-xs font-mono ${
+          isDark ? 'bg-[#0B0F17] border-[#1E293B]' : 'bg-slate-100 border-slate-300'
+        }`}>
           {(['ALL', 'OPEN', 'CRITICAL', 'RESOLVED'] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-2.5 py-1 rounded transition-colors ${
-                filter === f ? 'bg-[#182338] text-white font-medium' : 'text-slate-400 hover:text-slate-200'
+              className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                filter === f 
+                  ? 'bg-blue-600 text-white font-medium shadow-xs' 
+                  : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {f}
@@ -439,23 +447,30 @@ export const IncidentsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Active Incident Mitigation State Machine Flowchart */}
+      <IncidentFlowChart />
+
       {/* Incidents Table */}
-      <div className="bg-[#111726] rounded border border-[#1E293B] overflow-hidden">
+      <div className={`rounded-lg border overflow-hidden transition-colors ${
+        isDark ? 'bg-[#111726] border-[#1E293B]' : 'bg-white border-slate-200 shadow-xs'
+      }`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-[#0B0F17] text-slate-400 font-medium border-b border-[#1A2332]">
+            <thead className={`font-medium border-b ${
+              isDark ? 'bg-[#0B0F17] text-slate-400 border-[#1A2332]' : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}>
               <tr>
-                <th className="py-2 px-3.5">ID</th>
-                <th className="py-2 px-3.5">Severity</th>
-                <th className="py-2 px-3.5">Status</th>
-                <th className="py-2 px-3.5">Title &amp; Root Cause Diagnosis</th>
-                <th className="py-2 px-3.5">Workload</th>
-                <th className="py-2 px-3.5">Duration</th>
-                <th className="py-2 px-3.5">Owner</th>
-                <th className="py-2 px-3.5 text-right">Action</th>
+                <th className="py-2.5 px-3.5">ID</th>
+                <th className="py-2.5 px-3.5">Severity</th>
+                <th className="py-2.5 px-3.5">Status</th>
+                <th className="py-2.5 px-3.5">Title &amp; Root Cause Diagnosis</th>
+                <th className="py-2.5 px-3.5">Workload</th>
+                <th className="py-2.5 px-3.5">Duration</th>
+                <th className="py-2.5 px-3.5">Owner</th>
+                <th className="py-2.5 px-3.5 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#172030]">
+            <tbody className={`divide-y ${isDark ? 'divide-[#172030]' : 'divide-slate-100'}`}>
               {filteredIncidents.map(inc => {
                 const app = applications.find(a => a.id === inc.applicationId);
                 const isCrit = inc.severity === 'CRITICAL' && inc.status !== 'RESOLVED';
@@ -464,38 +479,42 @@ export const IncidentsView: React.FC = () => {
                   <tr
                     key={inc.id}
                     onClick={() => setSelectedIncidentId(inc.id)}
-                    className={`hover:bg-[#151D2E] cursor-pointer transition-colors ${isCrit ? 'bg-[#180E13]' : ''}`}
+                    className={`cursor-pointer transition-colors ${
+                      isCrit 
+                        ? (isDark ? 'bg-[#180E13]' : 'bg-rose-50/60') 
+                        : (isDark ? 'hover:bg-[#151D2E]' : 'hover:bg-slate-50')
+                    }`}
                   >
-                    <td className="py-2.5 px-3.5 font-bold text-slate-100">
+                    <td className="py-2.5 px-3.5 font-bold">
                       {inc.id}
                     </td>
 
                     <td className="py-2.5 px-3.5">
                       <span className={`font-semibold ${
-                        inc.severity === 'CRITICAL' ? 'text-rose-400 font-bold' : 'text-amber-400'
+                        inc.severity === 'CRITICAL' ? 'text-rose-500 font-bold' : 'text-amber-500'
                       }`}>
                         {inc.severity}
                       </span>
                     </td>
 
-                    <td className="py-2.5 px-3.5 text-slate-300">
+                    <td className={`py-2.5 px-3.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {inc.status}
                     </td>
 
                     <td className="py-2.5 px-3.5 font-sans max-w-md">
-                      <div className="font-semibold text-slate-100">{inc.title}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{inc.rootCause}</div>
+                      <div className="font-semibold">{inc.title}</div>
+                      <div className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{inc.rootCause}</div>
                     </td>
 
-                    <td className="py-2.5 px-3.5 font-sans text-slate-300 font-medium">
+                    <td className={`py-2.5 px-3.5 font-sans font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {app?.name} ({inc.environment})
                     </td>
 
-                    <td className="py-2.5 px-3.5 tabular-nums text-slate-300">
+                    <td className={`py-2.5 px-3.5 tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {inc.durationMinutes} min
                     </td>
 
-                    <td className="py-2.5 px-3.5 font-sans text-slate-300">
+                    <td className={`py-2.5 px-3.5 font-sans ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {inc.owner}
                     </td>
 
@@ -505,7 +524,11 @@ export const IncidentsView: React.FC = () => {
                           e.stopPropagation();
                           setSelectedIncidentId(inc.id);
                         }}
-                        className="px-2 py-0.5 text-slate-300 hover:text-white hover:bg-[#1D2B44] border border-[#23334E] rounded text-[11px] font-mono transition-colors"
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors border cursor-pointer ${
+                          isDark 
+                            ? 'text-slate-300 hover:text-white hover:bg-[#1D2B44] border-[#23334E]' 
+                            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-slate-300'
+                        }`}
                       >
                         INSPECT
                       </button>

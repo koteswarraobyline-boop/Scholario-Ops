@@ -78,6 +78,11 @@ interface OpsContextType {
   triggerSimulatedScenario: (scenario: 'RESOLVE_MOSAIC' | 'TRIGGER_MOSAIC_FAIL' | 'FAIL_CIPHER_DB' | 'DEADMAN_SILENCE' | 'RESET_ALL') => void;
   addAuditEntry: (action: string, category: AuditLog['category'], targetId: string, details: string) => void;
   
+  // Theme mode
+  theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
+  toggleTheme: () => void;
+
   // Computed summaries
   systemSummary: {
     totalApps: number;
@@ -142,6 +147,26 @@ export const OpsProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [selectedRunbookId, setSelectedRunbookId] = useState<string | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [lastUpdatedSecondsAgo, setLastUpdatedSecondsAgo] = useState<number>(0);
+  
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('scholario_theme');
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('scholario_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
 
   // Sync to localStorage
   useEffect(() => {
@@ -762,6 +787,9 @@ export const OpsProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         sendTestNotification,
         triggerSimulatedScenario,
         addAuditEntry,
+        theme,
+        setTheme,
+        toggleTheme,
         systemSummary: {
           totalApps,
           healthyApps,
